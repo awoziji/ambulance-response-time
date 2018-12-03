@@ -7,9 +7,9 @@ library(tidyverse)
 
 # The effect of the method chosen on ambulance time to arrival
 
-model_one = glm(time ~ method + distance,
+model_one = glm(time ~ strategy + distance,
                 family = gaussian(),
-                data = time_by_method)
+                data = time_by_strategy)
 
 summary(model_one)
 
@@ -23,10 +23,10 @@ summary(model_one)
 # area
 
 for (i in 0:11) {
-  model_i = glm(time ~ method,
+  model_i = glm(time ~ strategy,
                 subset = time_by_method$group == i,
                 family=gaussian(),
-                data=time_by_method)
+                data=time_by_strategy)
   print(round(ci.lin(model_i),2))
 }
 
@@ -52,9 +52,9 @@ for (i in 0:11) {
 
 # Change in the number of people that are under 10 minutes away from a hospital
 
-model_two = glm(under ~ method + distance,
+model_two = glm(under ~ strategy + distance,
                 family = quasipoisson(),
-                data = time_by_method)
+                data = time_by_strategy)
 
 summary(model_two)
 round(ci.lin(model_two, Exp=T),4)
@@ -65,10 +65,26 @@ round(ci.lin(model_two, Exp=T),4)
 
 # ---------------------------------------------------------------------------------
 
+# Time save for those city blocks that changed their target hospital
+
+model_thr = glm(time ~ strategy + distance,
+                family=gaussian(),
+                data=filter(time_by_strategy, change == 1))
+
+summary(model_thr)
+round(ci.lin(model_thr, Exp=F),4)
+
+# Interpretation
+# For those places where google maps routing service found a faster hospital other
+# than the hospitla from the referral area, the time saved was 109 seconds (CI95: 
+# -119 - -99 seconds).
+
+# ---------------------------------------------------------------------------------
+
 # Model with the best fit
 
-best_fit = lm(time ~ method * poly(distance, 2),
-              data=time_by_method)
+best_fit = lm(time ~ strategy * poly(distance, 2),
+              data=time_by_strategy)
 
 # Adjusted Rsqr = 0.845
 summary(best_fit)
@@ -79,6 +95,6 @@ time_by_method$predict = predict(best_fit)
 # Visualizations
 
 # time by distance with results from predictions drawn with best_fit model
-ggplot(time_by_method) +
-  geom_point(aes(distance, time, color=method), alpha=1, size=0.01) +
-  geom_line(aes(distance, predict, group=method))
+ggplot(time_by_strategy) +
+  geom_point(aes(distance, time, color=strategy), alpha=1, size=0.01) +
+  geom_line(aes(distance, predict, group=strategy))
