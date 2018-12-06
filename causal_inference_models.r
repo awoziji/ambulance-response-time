@@ -12,6 +12,7 @@ model_one = glm(time ~ strategy + distance,
                 data = time_by_strategy)
 
 summary(model_one)
+round(ci.lin(model_one),4)
 
 # Interpretation:
 # Overall, after adjusting for the distance, using google's fastest route 
